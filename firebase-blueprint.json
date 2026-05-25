@@ -1,0 +1,111 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile containing gamification states, preferences, and activity tracking.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The Google User UID" },
+        "email": { "type": "string", "description": "User email address" },
+        "displayName": { "type": "string", "description": "Display name of the user" },
+        "photoURL": { "type": "string", "description": "User avatar URL" },
+        "xp": { "type": "integer", "description": "Experience points accumulated" },
+        "level": { "type": "integer", "description": "Current productivity level" },
+        "streak": { "type": "integer", "description": "Daily productivity streak" },
+        "lastActiveDate": { "type": "string", "description": "Last active date key (YYYY-MM-DD)" },
+        "createdAt": { "type": "string", "description": "ISO timestamp of profile creation" },
+        "updatedAt": { "type": "string", "description": "ISO timestamp of last update" }
+      },
+      "required": ["uid", "email", "xp", "level", "streak", "createdAt", "updatedAt"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "Task object including tracking details, priority, and subtasks list.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique task ID" },
+        "userId": { "type": "string", "description": "Owner userId of the task" },
+        "title": { "type": "string", "description": "The task title text" },
+        "description": { "type": "string", "description": "The detailed task description" },
+        "dueDate": { "type": "string", "description": "Due date in YYYY-MM-DD form" },
+        "priority": { "type": "string", "enum": ["Low", "Medium", "High", "Critical", "Someday"] },
+        "status": { "type": "string", "enum": ["Todo", "In Progress", "Waiting", "Blocked", "Review", "Completed", "Archived"] },
+        "labels": { "type": "array" },
+        "tags": { "type": "array" },
+        "subtasks": { "type": "array" },
+        "difficulty": { "type": "integer", "description": "Difficulty value from 1 to 5" },
+        "estimatedMinutes": { "type": "integer", "description": "Time estimation in minutes" },
+        "actualMinutes": { "type": "integer", "description": "Actual duration spent on the task" },
+        "createdAt": { "type": "string", "description": "ISO creation timestamp" },
+        "updatedAt": { "type": "string", "description": "ISO update timestamp" }
+      },
+      "required": ["id", "userId", "title", "priority", "status", "difficulty", "estimatedMinutes", "createdAt", "updatedAt"]
+    },
+    "Habit": {
+      "title": "Habit",
+      "description": "A habit tracked daily or weekly with historical completion dates.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique habit ID" },
+        "userId": { "type": "string", "description": "Owner user ID" },
+        "title": { "type": "string", "description": "Title of the habit" },
+        "streak": { "type": "integer", "description": "Longest active streak of completions" },
+        "frequency": { "type": "string", "enum": ["daily", "weekly"] },
+        "completedDates": { "type": "array", "description": "Array of completed ISO strings" },
+        "createdAt": { "type": "string", "description": "ISO creation timestamp" }
+      },
+      "required": ["id", "userId", "title", "streak", "frequency", "completedDates", "createdAt"]
+    },
+    "Note": {
+      "title": "Note",
+      "description": "Rich text and markdown notes for second-brain concept mapping.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique note ID" },
+        "userId": { "type": "string", "description": "Owner user ID" },
+        "title": { "type": "string", "description": "Note title" },
+        "content": { "type": "string", "description": "Markdown text content" },
+        "tags": { "type": "array", "description": "Array of note relationship tags" },
+        "createdAt": { "type": "string", "description": "ISO creation timestamp" },
+        "updatedAt": { "type": "string", "description": "ISO update timestamp" }
+      },
+      "required": ["id", "userId", "title", "content", "tags", "createdAt", "updatedAt"]
+    },
+    "FocusSession": {
+      "title": "FocusSession",
+      "description": "A log of deep focus or pomodoro sessions.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique session ID" },
+        "userId": { "type": "string", "description": "Owner user ID" },
+        "taskId": { "type": "string", "description": "Optional linked task ID" },
+        "duration": { "type": "integer", "description": "Focus duration in minutes" },
+        "type": { "type": "string", "enum": ["pomodoro", "flow"] },
+        "completedAt": { "type": "string", "description": "ISO completion timestamp" }
+      },
+      "required": ["id", "userId", "duration", "type", "completedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Profile information of each user"
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "List of user tasks"
+    },
+    "/users/{userId}/habits/{habitId}": {
+      "schema": "Habit",
+      "description": "Daily/weekly habit trackers"
+    },
+    "/users/{userId}/notes/{noteId}": {
+      "schema": "Note",
+      "description": "Knowledge and notes vault"
+    },
+    "/users/{userId}/focus_sessions/{sessionId}": {
+      "schema": "FocusSession",
+      "description": "Focused task workflow tracking history logs"
+    }
+  }
+}

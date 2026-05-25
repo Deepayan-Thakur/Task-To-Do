@@ -1,0 +1,139 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net default catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Reuseable global safety validation primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Helper functions for entity checks
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'xp', 'level', 'streak', 'createdAt', 'updatedAt'])
+        && data.keys().size() <= 12
+        && data.uid is string && data.uid.size() <= 128
+        && data.email is string && data.email.size() <= 256
+        && data.xp is int && data.xp >= 0
+        && data.level is int && data.level >= 1
+        && data.streak is int && data.streak >= 0;
+    }
+
+    function isValidTask(data) {
+      return data.keys().hasAll(['id', 'userId', 'title', 'priority', 'status', 'difficulty', 'estimatedMinutes', 'createdAt', 'updatedAt'])
+        && data.keys().size() <= 15
+        && data.id is string && data.id.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.title is string && data.title.size() <= 1000
+        && data.priority in ["Low", "Medium", "High", "Critical", "Someday"]
+        && data.status in ["Todo", "In Progress", "Waiting", "Blocked", "Review", "Completed", "Archived"]
+        && data.difficulty is int && data.difficulty >= 1 && data.difficulty <= 5
+        && data.estimatedMinutes is int && data.estimatedMinutes >= 0;
+    }
+
+    function isValidHabit(data) {
+      return data.keys().hasAll(['id', 'userId', 'title', 'streak', 'frequency', 'completedDates', 'createdAt'])
+        && data.keys().size() <= 10
+        && data.id is string && data.id.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.title is string && data.title.size() <= 1000
+        && data.streak is int && data.streak >= 0
+        && data.frequency in ["daily", "weekly"]
+        && data.completedDates is list && data.completedDates.size() <= 1000;
+    }
+
+    function isValidNote(data) {
+      return data.keys().hasAll(['id', 'userId', 'title', 'content', 'tags', 'createdAt', 'updatedAt'])
+        && data.keys().size() <= 10
+        && data.id is string && data.id.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.title is string && data.title.size() <= 1000
+        && data.content is string && data.content.size() <= 200000
+        && data.tags is list && data.tags.size() <= 100;
+    }
+
+    function isValidFocusSession(data) {
+      return data.keys().hasAll(['id', 'userId', 'duration', 'type', 'completedAt'])
+        && data.keys().size() <= 8
+        && data.id is string && data.id.size() <= 128
+        && data.userId is string && data.userId.size() <= 128
+        && data.duration is int && data.duration >= 0
+        && data.type in ["pomodoro", "flow"];
+    }
+
+    // 1. User Profiles Collection
+    match /users/{userId} {
+      allow read: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && isValidId(userId) && isValidUser(incoming());
+      allow update: if isSignedIn() && isOwner(userId) && isValidId(userId) && isValidUser(incoming())
+        && incoming().uid == existing().uid
+        && incoming().email == existing().email
+        && incoming().createdAt == existing().createdAt;
+      allow delete: if false; // User accounts are not self-deleted in MVP
+    }
+
+    // 2. User Tasks Subcollection
+    match /users/{userId}/tasks/{taskId} {
+      allow read, list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && isValidId(taskId) && isValidTask(incoming());
+      allow update: if isSignedIn() && isOwner(userId) && isValidId(taskId) && isValidTask(incoming())
+        && incoming().id == existing().id
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt;
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+
+    // 3. User Habits Subcollection
+    match /users/{userId}/habits/{habitId} {
+      allow read, list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && isValidId(habitId) && isValidHabit(incoming());
+      allow update: if isSignedIn() && isOwner(userId) && isValidId(habitId) && isValidHabit(incoming())
+        && incoming().id == existing().id
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt;
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+
+    // 4. User Notes Subcollection
+    match /users/{userId}/notes/{noteId} {
+      allow read, list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && isValidId(noteId) && isValidNote(incoming());
+      allow update: if isSignedIn() && isOwner(userId) && isValidId(noteId) && isValidNote(incoming())
+        && incoming().id == existing().id
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt;
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+
+    // 5. Focus Sessions Subcollection
+    match /users/{userId}/focus_sessions/{sessionId} {
+      allow read, list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && isValidId(sessionId) && isValidFocusSession(incoming());
+      allow update: if isSignedIn() && isOwner(userId) && isValidId(sessionId) && isValidFocusSession(incoming())
+        && incoming().id == existing().id
+        && incoming().userId == existing().userId;
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+  }
+}

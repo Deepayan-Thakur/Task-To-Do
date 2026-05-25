@@ -1,0 +1,6 @@
+{
+  "name": "NeuroList",
+  "description": "An ultra-fast, visually stunning, AI-enhanced productivity ecosystem for task management, habit tracking, and deep focus.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
