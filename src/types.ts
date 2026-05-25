@@ -58,3 +58,13 @@ export interface FocusSession {
   type: "pomodoro" | "flow";
   completedAt: string;
 }
+
+export interface Note {
+  id: string;
+  userId: string;
+  title: string;
+  content: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}

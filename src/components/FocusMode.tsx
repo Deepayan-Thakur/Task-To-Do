@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useTasks } from "../context/TaskContext";
+import { TaskStatus } from "../types";
 import { 
   Play, 
   Pause, 
